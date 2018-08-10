@@ -9,7 +9,7 @@ using LUISPractice.Model;
 
 namespace LUISPractice.Dialogs
 {
-    [LuisModel("42e4a1b7-6966-4d0f-b764-af16871c23d0", "ec2f1f115a9448569f549b6af30f0d39")]
+    [LuisModel("ENTER-FIRST-LUIS-MODEL#-HERE", "ENTER-SECOND-LUIS-MODEL#-HERE")]
     [Serializable]
     public class RootDialog : LuisDialog<Cakes>
     {
