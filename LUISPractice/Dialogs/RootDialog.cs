@@ -1,0 +1,77 @@
+﻿using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.FormFlow;
+using Microsoft.Bot.Builder.Luis;
+using Microsoft.Bot.Builder.Luis.Models;
+using Microsoft.Bot.Connector;
+using System;
+using System.Threading.Tasks;
+using LUISPractice.Model;
+
+namespace LUISPractice.Dialogs
+{
+    [LuisModel("42e4a1b7-6966-4d0f-b764-af16871c23d0", "ec2f1f115a9448569f549b6af30f0d39")]
+    [Serializable]
+    public class RootDialog : LuisDialog<Cakes>
+    {
+        private readonly BuildFormDelegate<Cakes> OrderCake;
+
+        [field: NonSerialized()]
+        protected Activity _msg;
+
+        protected override async Task MessageReceived(IDialogContext context, IAwaitable<IMessageActivity> item)
+        {
+            _msg = (Activity)await item;
+            await base.MessageReceived(context, item);
+        }
+
+        public RootDialog(BuildFormDelegate<Cakes> orderCake)
+        {
+            OrderCake = orderCake;
+        }
+
+        [LuisIntent("")]
+        public async Task None(IDialogContext context, LuisResult res)
+        {
+            await context.PostAsync(Str.cStrDontUnderstand);
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("Welcome")]
+        public async Task Welcome(IDialogContext context, LuisResult res)
+        {
+            await Task.Run(() => context.Call(new WelcomeDialog(), Callback));
+        }
+
+        private async Task Callback(IDialogContext context, IAwaitable<object> result)
+        {
+            await Task.Run(() => context.Wait(MessageReceived));
+        }
+
+        [LuisIntent("CakeOrder")]
+        public async Task CakeOrder(IDialogContext context, LuisResult res)
+        {
+            await Task.Run(async () =>
+            {
+                bool f = false;
+                var r = Validate.ValidateWords(res.Query.ToLower());
+
+                if (r.v)
+                {
+                    f = true;
+                    Validate.CakeType = r.t;
+                }
+                if (f)
+                {
+                    var cakeOrderForm = new FormDialog<Cakes>(new Cakes(), OrderCake, FormOptions.PromptInStart);
+                    context.Call(cakeOrderForm, Callback);
+                }
+                else
+                {
+                    await context.PostAsync(Str.cStrDontUnderstand);
+                    context.Wait(MessageReceived);
+                }
+            });
+        }
+
+    }
+}
